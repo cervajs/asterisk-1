@@ -1,7 +1,7 @@
-Index: asterisk-16.1.1/apps/app_queue.c
+Index: asterisk-16.2.0/apps/app_queue.c
 ===================================================================
---- asterisk-16.1.1.orig/apps/app_queue.c
-+++ asterisk-16.1.1/apps/app_queue.c
+--- asterisk-16.2.0.orig/apps/app_queue.c
++++ asterisk-16.2.0/apps/app_queue.c
 @@ -1398,6 +1398,8 @@ enum queue_reload_mask {
  	QUEUE_RELOAD_MEMBER = (1 << 1),
  	QUEUE_RELOAD_RULES = (1 << 2),
@@ -152,7 +152,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  	struct ao2_container *members;      /*!< Head of the list of members */
  	struct queue_ent *head;             /*!< Head of the list of callers */
  	AST_LIST_ENTRY(call_queue) list;    /*!< Next call queue */
-@@ -1774,6 +1870,40 @@ static int set_member_paused(const char
+@@ -1774,6 +1870,40 @@ static int set_member_paused(const char 
  static int update_queue(struct call_queue *q, struct member *member, int callcompletedinsl, time_t starttime);
  
  static struct member *find_member_by_queuename_and_interface(const char *queuename, const char *interface);
@@ -454,7 +454,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  {
  	struct member *mem;
  	int avl = 0;
-@@ -4299,7 +4490,7 @@ static int num_available_members(struct
+@@ -4299,7 +4490,7 @@ static int num_available_members(struct 
  	mem_iter = ao2_iterator_init(q->members, 0);
  	while ((mem = ao2_iterator_next(&mem_iter))) {
  
@@ -504,7 +504,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  		tmp->stillgoing = 0;
  		++*busies;
  		return 0;
-@@ -5489,14 +5687,14 @@ static int is_our_turn(struct queue_ent
+@@ -5489,14 +5687,14 @@ static int is_our_turn(struct queue_ent 
  	/* This needs a lock. How many members are available to be served? */
  	ao2_lock(qe->parent);
  
@@ -544,7 +544,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  	}
  
  	return res;
-@@ -6912,6 +7117,7 @@ static int try_calling(struct queue_ent
+@@ -6912,6 +7117,7 @@ static int try_calling(struct queue_ent 
  		ao2_unlock(qe->parent);
  		/* Increment the refcount for this member, since we're going to be using it for awhile in here. */
  		ao2_ref(member, 1);
@@ -577,7 +577,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  			cur_member->reason_paused);
  
  		ao2_ref(cur_member, -1);
-@@ -7297,6 +7504,7 @@ static int remove_from_queue(const char
+@@ -7297,6 +7504,7 @@ static int remove_from_queue(const char 
  		.name = queuename,
  	};
  	struct member *mem, tmpmem;
@@ -585,7 +585,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  	int res = RES_NOSUCHQUEUE;
  
  	ast_copy_string(tmpmem.interface, interface, sizeof(tmpmem.interface));
-@@ -7316,13 +7524,20 @@ static int remove_from_queue(const char
+@@ -7316,13 +7524,20 @@ static int remove_from_queue(const char 
  			queue_publish_member_blob(queue_member_removed_type(), queue_member_blob_create(q, mem));
  
  			member_remove_from_queue(q, mem);
@@ -607,7 +607,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  				ast_devstate_changed(AST_DEVICE_INUSE, AST_DEVSTATE_CACHABLE, "Queue:%s_avail", q->name);
  			}
  
-@@ -7344,7 +7559,7 @@ static int remove_from_queue(const char
+@@ -7344,7 +7559,7 @@ static int remove_from_queue(const char 
   * \retval RES_EXISTS queue exists but no members
   * \retval RES_OUT_OF_MEMORY queue exists but not enough memory to create member
  */
@@ -883,7 +883,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  				ast_str_set(&out, 0, "      %d. %s (wait: %ld:%2.2ld, prio: %d)",
  					pos++, ast_channel_name(qe->chan), (long) (now - qe->start) / 60,
  					(long) (now - qe->start) % 60, qe->prio);
-@@ -10084,11 +10369,12 @@ static int manager_queues_status(struct
+@@ -10084,11 +10369,12 @@ static int manager_queues_status(struct 
  						"Status: %d\r\n"
  						"Paused: %d\r\n"
  						"PausedReason: %s\r\n"
@@ -897,7 +897,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  					++q_items;
  				}
  				ao2_ref(mem, -1);
-@@ -10133,7 +10419,7 @@ static int manager_queues_status(struct
+@@ -10133,7 +10419,7 @@ static int manager_queues_status(struct 
  
  static int manager_add_queue_member(struct mansession *s, const struct message *m)
  {
@@ -978,7 +978,7 @@ Index: asterisk-16.1.1/apps/app_queue.c
  	case RES_OKAY:
  		if (ast_strlen_zero(membername) || !log_membername_as_agent) {
  			ast_queue_log(queuename, "CLI", interface, "ADDMEMBER", "%s", "");
-@@ -11040,6 +11341,10 @@ static char *handle_queue_reload(struct
+@@ -11040,6 +11341,10 @@ static char *handle_queue_reload(struct 
  		ast_set_flag(&mask, QUEUE_RELOAD_MEMBER);
  	} else if (!strcasecmp(a->argv[2], "parameters")) {
  		ast_set_flag(&mask, QUEUE_RELOAD_PARAMETERS);
@@ -989,21 +989,42 @@ Index: asterisk-16.1.1/apps/app_queue.c
  	} else if (!strcasecmp(a->argv[2], "all")) {
  		ast_set_flag(&mask, AST_FLAGS_ALL);
  	}
-@@ -11136,6 +11441,1182 @@ static int qupd_exec(struct ast_channel
+@@ -11136,140 +11441,1315 @@ static int qupd_exec(struct ast_channel 
  	return 0;
  }
  
-+static struct stasis_message_router *agent_router;
-+static struct stasis_forward *topic_forwarder;
-+
+-static struct ast_cli_entry cli_queue[] = {
+-	AST_CLI_DEFINE(queue_show, "Show status of a specified queue"),
+-	AST_CLI_DEFINE(handle_queue_rule_show, "Show the rules defined in queuerules.conf"),
+-	AST_CLI_DEFINE(handle_queue_add_member, "Add a channel to a specified queue"),
+-	AST_CLI_DEFINE(handle_queue_remove_member, "Removes a channel from a specified queue"),
+-	AST_CLI_DEFINE(handle_queue_pause_member, "Pause or unpause a queue member"),
+-	AST_CLI_DEFINE(handle_queue_set_member_penalty, "Set penalty for a channel of a specified queue"),
+-	AST_CLI_DEFINE(handle_queue_set_member_ringinuse, "Set ringinuse for a channel of a specified queue"),
+-	AST_CLI_DEFINE(handle_queue_reload, "Reload queues, members, queue rules, or parameters"),
+-	AST_CLI_DEFINE(handle_queue_reset, "Reset statistics for a queue"),
+-	AST_CLI_DEFINE(handle_queue_change_priority_caller, "Change priority caller on queue"),
+-};
+-
+ static struct stasis_message_router *agent_router;
+ static struct stasis_forward *topic_forwarder;
+ 
+-static int unload_module(void)
 +static int reload(void)
-+{
+ {
+-	stasis_message_router_unsubscribe_and_join(agent_router);
+-	agent_router = NULL;
+-
+-	topic_forwarder = stasis_forward_cancel(topic_forwarder);
 +	struct ast_flags mask = {AST_FLAGS_ALL & ~QUEUE_RESET_STATS,};
 +	ast_unload_realtime("queue_members");
 +	reload_handler(1, &mask, NULL);
 +	return 0;
 +}
-+
+ 
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_caller_join_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_caller_leave_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_caller_abandon_type);
 +/* \brief Find a member by looking up queuename and interface.
 + * \return Returns a member or NULL if member not found.
 +*/
@@ -1011,7 +1032,13 @@ Index: asterisk-16.1.1/apps/app_queue.c
 +{
 +	struct member *mem = NULL;
 +	struct call_queue *q;
-+
+ 
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_status_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_added_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_removed_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_pause_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_penalty_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_ringinuse_type);
 +	if ((q = find_load_queue_rt_friendly(queuename))) {
 +		ao2_lock(q);
 +		mem = ao2_find(q->members, interface, OBJ_KEY);
@@ -1020,13 +1047,47 @@ Index: asterisk-16.1.1/apps/app_queue.c
 +	}
 +	return mem;
 +}
-+
+ 
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_called_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_connect_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_complete_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_dump_type);
+-	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_ringnoanswer_type);
 +static char *handle_queue_skills_rules(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
 +{
 +	const char *name;
 +	struct skill_ruleset *rs;
 +	struct skill_rule *rule;
-+
+ 
+-	ast_cli_unregister_multiple(cli_queue, ARRAY_LEN(cli_queue));
+-	ast_manager_unregister("QueueStatus");
+-	ast_manager_unregister("QueueRule");
+-	ast_manager_unregister("QueueSummary");
+-	ast_manager_unregister("QueueAdd");
+-	ast_manager_unregister("QueueRemove");
+-	ast_manager_unregister("QueuePause");
+-	ast_manager_unregister("QueueLog");
+-	ast_manager_unregister("QueueUpdate");
+-	ast_manager_unregister("QueuePenalty");
+-	ast_manager_unregister("QueueReload");
+-	ast_manager_unregister("QueueReset");
+-	ast_manager_unregister("QueueMemberRingInUse");
+-	ast_manager_unregister("QueueChangePriorityCaller");
+-	ast_unregister_application(app_aqm);
+-	ast_unregister_application(app_rqm);
+-	ast_unregister_application(app_pqm);
+-	ast_unregister_application(app_upqm);
+-	ast_unregister_application(app_ql);
+-	ast_unregister_application(app_qupd);
+-	ast_unregister_application(app);
+-	ast_custom_function_unregister(&queueexists_function);
+-	ast_custom_function_unregister(&queuevar_function);
+-	ast_custom_function_unregister(&queuemembercount_function);
+-	ast_custom_function_unregister(&queuemembercount_dep);
+-	ast_custom_function_unregister(&queuememberlist_function);
+-	ast_custom_function_unregister(&queuegetchannel_function);
+-	ast_custom_function_unregister(&queuewaitingcount_function);
+-	ast_custom_function_unregister(&queuememberpenalty_function);
 +	switch (cmd) {
 +	case CLI_INIT:
 +		e->command = "queue show skills rules";
@@ -1038,12 +1099,18 @@ Index: asterisk-16.1.1/apps/app_queue.c
 +	case CLI_GENERATE:
 +		return complete_queue_skills_rules(a->line, a->word, a->pos, a->n);
 +	}
-+
+ 
+-	device_state_sub = stasis_unsubscribe_and_join(device_state_sub);
 +	if (a->argc != 3 && a->argc != 4 && a->argc != 5)
 +		return CLI_SHOWUSAGE;
-+
+ 
+-	ast_unload_realtime("queue_members");
+-	ao2_cleanup(queues);
+-	ao2_cleanup(pending_members);
 +	name = a->argc == 5 ? a->argv[4] : "";
-+
+ 
+-	queues = NULL;
+-	return 0;
 +	AST_LIST_LOCK(&skill_rulesets);
 +	AST_LIST_TRAVERSE(&skill_rulesets, rs, entry) {
 +		if (!name || !strcmp(rs->name, name)) {
@@ -1067,30 +1134,60 @@ Index: asterisk-16.1.1/apps/app_queue.c
 +	}
 +	AST_LIST_UNLOCK(&skill_rulesets);
 +	return CLI_SUCCESS;
-+}
-+
+ }
+ 
+-/*!
+- * \brief Load the module
+- *
+- * Module loading including tests for configuration or dependencies.
+- * This function can return AST_MODULE_LOAD_FAILURE, AST_MODULE_LOAD_DECLINE,
+- * or AST_MODULE_LOAD_SUCCESS. If a dependency or environment variable fails
+- * tests return AST_MODULE_LOAD_FAILURE. If the module can not load the
+- * configuration file or other non-critical problem return
+- * AST_MODULE_LOAD_DECLINE. On success return AST_MODULE_LOAD_SUCCESS.
+- */
+-static int load_module(void)
 +static char *complete_queue_skills_groups(const char *line, const char *word, int pos, int state)
-+{
+ {
+-	int err = 0;
+-	struct ast_flags mask = {AST_FLAGS_ALL, };
+-	struct ast_config *member_config;
+-	struct stasis_topic *queue_topic;
+-	struct stasis_topic *manager_topic;
+-
+-	queues = ao2_container_alloc_hash(AO2_ALLOC_OPT_LOCK_MUTEX, 0, MAX_QUEUE_BUCKETS,
+-		queue_hash_cb, NULL, queue_cmp_cb);
+-	if (!queues) {
+-		return AST_MODULE_LOAD_DECLINE;
 +	int which = 0;
 +	struct skills_group *skills;
 +	int wordlen = strlen(word);
 +	char *ret = NULL;
 +	if (pos != 4) /* Wha? */ {
 +		return NULL;
-+	}
-+
+ 	}
+ 
+-	pending_members = ao2_container_alloc_hash(AO2_ALLOC_OPT_LOCK_MUTEX, 0,
+-		MAX_CALL_ATTEMPT_BUCKETS, pending_members_hash, NULL, pending_members_cmp);
+-	if (!pending_members) {
+-		unload_module();
+-		return AST_MODULE_LOAD_DECLINE;
 +	AST_LIST_LOCK(&skills_groups);
 +	AST_LIST_TRAVERSE(&skills_groups, skills, entry) {
 +		if (!strncasecmp(word, skills->name, wordlen) && ++which > state) {
 +			ret = ast_strdup(skills->name);
 +			break;
 +		}
-+	}
+ 	}
 +	AST_LIST_UNLOCK(&skills_groups);
-+
+ 
+-	use_weight = 0;
 +	return ret;
 +}
-+
+ 
+-	if (reload_handler(0, &mask, NULL)) {
+-		unload_module();
+-		return AST_MODULE_LOAD_DECLINE;
 +static char *handle_queue_skills_groups(struct ast_cli_entry *e, int cmd, struct ast_cli_args *a)
 +{
 +	const char *name;
@@ -1107,13 +1204,27 @@ Index: asterisk-16.1.1/apps/app_queue.c
 +		return NULL;
 +	case CLI_GENERATE:
 +		return complete_queue_skills_groups(a->line, a->word, a->pos, a->n);
-+	}
-+
+ 	}
+ 
+-	ast_realtime_require_field("queue_members", "paused", RQ_INTEGER1, 1, "uniqueid", RQ_UINTEGER2, 5, SENTINEL);
 +	if (a->argc != 3 && a->argc != 4 && a->argc != 5)
 +		return CLI_SHOWUSAGE;
-+
+ 
+-	/*
+-	 * This section is used to determine which name for 'ringinuse' to use in realtime members
+-	 * Necessary for supporting older setups.
+-	 */
+-	member_config = ast_load_realtime_multientry("queue_members", "interface LIKE", "%", "queue_name LIKE", "%", SENTINEL);
+-	if (!member_config) {
+-		realtime_ringinuse_field = "ringinuse";
+-	} else {
+-		const char *config_val;
 +	name = a->argc == 5 ? a->argv[4] : "";
-+
+ 
+-		if ((config_val = ast_variable_retrieve(member_config, NULL, "ringinuse"))) {
+-			ast_log(LOG_NOTICE, "ringinuse field entries found in queue_members table. Using 'ringinuse'\n");
+-			realtime_ringinuse_field = "ringinuse";
+-		} else if ((config_val = ast_variable_retrieve(member_config, NULL, "ignorebusy"))) {
 +	AST_LIST_LOCK(&skills_groups);
 +	AST_LIST_TRAVERSE(&skills_groups, skills, entry) {
 +		if (!name || !strcmp(skills->name, name)) {
@@ -2169,23 +2280,142 @@ Index: asterisk-16.1.1/apps/app_queue.c
 +	op_value->defined = 0;
 +}
 +
- static struct ast_cli_entry cli_queue[] = {
- 	AST_CLI_DEFINE(queue_show, "Show status of a specified queue"),
- 	AST_CLI_DEFINE(handle_queue_rule_show, "Show the rules defined in queuerules.conf"),
-@@ -11147,11 +12628,10 @@ static struct ast_cli_entry cli_queue[]
- 	AST_CLI_DEFINE(handle_queue_reload, "Reload queues, members, queue rules, or parameters"),
- 	AST_CLI_DEFINE(handle_queue_reset, "Reset statistics for a queue"),
- 	AST_CLI_DEFINE(handle_queue_change_priority_caller, "Change priority caller on queue"),
++static struct ast_cli_entry cli_queue[] = {
++	AST_CLI_DEFINE(queue_show, "Show status of a specified queue"),
++	AST_CLI_DEFINE(handle_queue_rule_show, "Show the rules defined in queuerules.conf"),
++	AST_CLI_DEFINE(handle_queue_add_member, "Add a channel to a specified queue"),
++	AST_CLI_DEFINE(handle_queue_remove_member, "Removes a channel from a specified queue"),
++	AST_CLI_DEFINE(handle_queue_pause_member, "Pause or unpause a queue member"),
++	AST_CLI_DEFINE(handle_queue_set_member_penalty, "Set penalty for a channel of a specified queue"),
++	AST_CLI_DEFINE(handle_queue_set_member_ringinuse, "Set ringinuse for a channel of a specified queue"),
++	AST_CLI_DEFINE(handle_queue_reload, "Reload queues, members, queue rules, or parameters"),
++	AST_CLI_DEFINE(handle_queue_reset, "Reset statistics for a queue"),
++	AST_CLI_DEFINE(handle_queue_change_priority_caller, "Change priority caller on queue"),
 +	AST_CLI_DEFINE(handle_queue_skills_groups, "Show the skills groups defined in queueskills.conf"),
 +	AST_CLI_DEFINE(handle_queue_skills_rules, "Show the skills rules defined in queueskillrules.conf"),
- };
- 
--static struct stasis_message_router *agent_router;
--static struct stasis_forward *topic_forwarder;
--
- static int unload_module(void)
- {
- 	stasis_message_router_unsubscribe_and_join(agent_router);
++};
++
++static int unload_module(void)
++{
++	stasis_message_router_unsubscribe_and_join(agent_router);
++	agent_router = NULL;
++
++	topic_forwarder = stasis_forward_cancel(topic_forwarder);
++
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_caller_join_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_caller_leave_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_caller_abandon_type);
++
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_status_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_added_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_removed_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_pause_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_penalty_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_member_ringinuse_type);
++
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_called_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_connect_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_complete_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_dump_type);
++	STASIS_MESSAGE_TYPE_CLEANUP(queue_agent_ringnoanswer_type);
++
++	ast_cli_unregister_multiple(cli_queue, ARRAY_LEN(cli_queue));
++	ast_manager_unregister("QueueStatus");
++	ast_manager_unregister("QueueRule");
++	ast_manager_unregister("QueueSummary");
++	ast_manager_unregister("QueueAdd");
++	ast_manager_unregister("QueueRemove");
++	ast_manager_unregister("QueuePause");
++	ast_manager_unregister("QueueLog");
++	ast_manager_unregister("QueueUpdate");
++	ast_manager_unregister("QueuePenalty");
++	ast_manager_unregister("QueueReload");
++	ast_manager_unregister("QueueReset");
++	ast_manager_unregister("QueueMemberRingInUse");
++	ast_manager_unregister("QueueChangePriorityCaller");
++	ast_unregister_application(app_aqm);
++	ast_unregister_application(app_rqm);
++	ast_unregister_application(app_pqm);
++	ast_unregister_application(app_upqm);
++	ast_unregister_application(app_ql);
++	ast_unregister_application(app_qupd);
++	ast_unregister_application(app);
++	ast_custom_function_unregister(&queueexists_function);
++	ast_custom_function_unregister(&queuevar_function);
++	ast_custom_function_unregister(&queuemembercount_function);
++	ast_custom_function_unregister(&queuemembercount_dep);
++	ast_custom_function_unregister(&queuememberlist_function);
++	ast_custom_function_unregister(&queuegetchannel_function);
++	ast_custom_function_unregister(&queuewaitingcount_function);
++	ast_custom_function_unregister(&queuememberpenalty_function);
++
++	device_state_sub = stasis_unsubscribe_and_join(device_state_sub);
++
++	ast_unload_realtime("queue_members");
++	ao2_cleanup(queues);
++	ao2_cleanup(pending_members);
++
++	queues = NULL;
++	return 0;
++}
++
++/*!
++ * \brief Load the module
++ *
++ * Module loading including tests for configuration or dependencies.
++ * This function can return AST_MODULE_LOAD_FAILURE, AST_MODULE_LOAD_DECLINE,
++ * or AST_MODULE_LOAD_SUCCESS. If a dependency or environment variable fails
++ * tests return AST_MODULE_LOAD_FAILURE. If the module can not load the
++ * configuration file or other non-critical problem return
++ * AST_MODULE_LOAD_DECLINE. On success return AST_MODULE_LOAD_SUCCESS.
++ */
++static int load_module(void)
++{
++	int err = 0;
++	struct ast_flags mask = {AST_FLAGS_ALL, };
++	struct ast_config *member_config;
++	struct stasis_topic *queue_topic;
++	struct stasis_topic *manager_topic;
++
++	queues = ao2_container_alloc_hash(AO2_ALLOC_OPT_LOCK_MUTEX, 0, MAX_QUEUE_BUCKETS,
++		queue_hash_cb, NULL, queue_cmp_cb);
++	if (!queues) {
++		return AST_MODULE_LOAD_DECLINE;
++	}
++
++	pending_members = ao2_container_alloc_hash(AO2_ALLOC_OPT_LOCK_MUTEX, 0,
++		MAX_CALL_ATTEMPT_BUCKETS, pending_members_hash, NULL, pending_members_cmp);
++	if (!pending_members) {
++		unload_module();
++		return AST_MODULE_LOAD_DECLINE;
++	}
++
++	use_weight = 0;
++
++	if (reload_handler(0, &mask, NULL)) {
++		unload_module();
++		return AST_MODULE_LOAD_DECLINE;
++	}
++
++	ast_realtime_require_field("queue_members", "paused", RQ_INTEGER1, 1, "uniqueid", RQ_UINTEGER2, 5, SENTINEL);
++
++	/*
++	 * This section is used to determine which name for 'ringinuse' to use in realtime members
++	 * Necessary for supporting older setups.
++	 */
++	member_config = ast_load_realtime_multientry("queue_members", "interface LIKE", "%", "queue_name LIKE", "%", SENTINEL);
++	if (!member_config) {
++		realtime_ringinuse_field = "ringinuse";
++	} else {
++		const char *config_val;
++
++		if ((config_val = ast_variable_retrieve(member_config, NULL, "ringinuse"))) {
++			ast_log(LOG_NOTICE, "ringinuse field entries found in queue_members table. Using 'ringinuse'\n");
++			realtime_ringinuse_field = "ringinuse";
++		} else if ((config_val = ast_variable_retrieve(member_config, NULL, "ignorebusy"))) {
+ 			ast_log(LOG_NOTICE, "ignorebusy field found in queue_members table with no ringinuse field. Using 'ignorebusy'\n");
+ 			realtime_ringinuse_field = "ignorebusy";
+ 		} else {
 @@ -11375,31 +12855,6 @@ static int load_module(void)
  	return AST_MODULE_LOAD_SUCCESS;
  }
@@ -2218,10 +2448,10 @@ Index: asterisk-16.1.1/apps/app_queue.c
  AST_MODULE_INFO(ASTERISK_GPL_KEY, AST_MODFLAG_LOAD_ORDER, "True Call Queueing",
  	.support_level = AST_MODULE_SUPPORT_CORE,
  	.load = load_module,
-Index: asterisk-16.1.1/configs/samples/queueskillrules.conf.sample
+Index: asterisk-16.2.0/configs/samples/queueskillrules.conf.sample
 ===================================================================
 --- /dev/null
-+++ asterisk-16.1.1/configs/samples/queueskillrules.conf.sample
++++ asterisk-16.2.0/configs/samples/queueskillrules.conf.sample
 @@ -0,0 +1,63 @@
 +; This file describes skill routing rules. The Queue() application can get the
 +; 'skill_ruleset' argument which is the name of one skill routing ruleset. If
@@ -2286,10 +2516,10 @@ Index: asterisk-16.1.1/configs/samples/queueskillrules.conf.sample
 +; [client-cool]
 +; rule => EWT < 120, technic = 0 & (sympathy > 60)
 +; rule => technic = 0
-Index: asterisk-16.1.1/configs/samples/queueskills.conf.sample
+Index: asterisk-16.2.0/configs/samples/queueskills.conf.sample
 ===================================================================
 --- /dev/null
-+++ asterisk-16.1.1/configs/samples/queueskills.conf.sample
++++ asterisk-16.2.0/configs/samples/queueskills.conf.sample
 @@ -0,0 +1,46 @@
 +; Describe skills groups here to assign them to queue members. You can set
 +; weight to each skills. It'll be used by skill rules to know if a queue member
